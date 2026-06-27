@@ -6,16 +6,13 @@ This is a real, runnable web application, not a demo: a Python backend that hold
 
 ## Screenshots
 
-<!-- Open this README in GitHub's editor and DRAG your screenshots onto the lines below.
-     GitHub uploads them and inserts the image links automatically. -->
 
 *A cited, grounded answer:*
 
-_add screenshot here_
+<img width="1000" height="917" alt="S1" src="https://github.com/user-attachments/assets/fa9b80e1-5a92-41c0-acd8-1eb7b9e9a9d3" />
 
-*An honest refusal when the documents don't cover the question:*
+<img width="990" height="742" alt="S2" src="https://github.com/user-attachments/assets/bb0eb470-7ab7-4c9e-8bb6-21d72ad4361d" />
 
-_add screenshot here_
 
 
 ---
