@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ops RAG Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1b2330;--ink-soft:#3a4456;--muted:#727c8c;
+    --paper:#f7f5f0;--panel:#fff;--line:#e7e3da;--line-strong:#d8d3c7;
+    --teal:#0f766e;--teal-soft:#dcefec;--teal-line:#b6dcd6;
+    --amber:#b45309;--amber-soft:#fbeedd;--amber-line:#eccfa6;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1100px 560px at 50% -10%,#fffdf8,rgba(255,253,248,0) 60%),var(--paper);
+    color:var(--ink);font-family:"Inter",system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;padding:26px 18px 70px}
+  .wrap{max-width:760px;margin:0 auto}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:11px}
+  .mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(150deg,var(--teal),#13564f);
+    display:grid;place-items:center;color:#eafaf7;font-family:"Spline Sans Mono",monospace;font-weight:600;box-shadow:0 2px 0 rgba(15,118,110,.25)}
+  .brand h1{font-size:18px;font-weight:600;margin:0;letter-spacing:-.01em}
+  .brand .sub{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .status{font-family:"Spline Sans Mono",monospace;font-size:11px;padding:5px 9px;border-radius:999px;border:1px solid var(--line-strong);color:var(--muted);background:var(--panel)}
+  .status.ok{color:var(--teal);background:var(--teal-soft);border-color:var(--teal-line)}
+  .status.warn{color:var(--amber);background:var(--amber-soft);border-color:var(--amber-line)}
+
+  .panel{margin-top:18px;border:1px solid var(--line);background:var(--panel);border-radius:var(--radius);padding:15px 16px}
+  .panel h2{font-size:11px;font-family:"Spline Sans Mono",monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 11px;font-weight:500}
+  .uprow{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+  .filebtn{position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line-strong);background:var(--paper);
+    border-radius:10px;padding:9px 13px;font-size:13px;cursor:pointer;color:var(--ink-soft)}
+  .filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+  .btn{border:0;border-radius:10px;background:var(--teal);color:#f2fffd;font-family:inherit;font-size:13px;font-weight:600;padding:9px 15px;cursor:pointer}
+  .btn:hover{background:#0c5f58}.btn:disabled{opacity:.5;cursor:default}
+  .btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line-strong)}
+  .btn.ghost:hover{color:var(--ink);background:var(--paper)}
+  .fname{font-size:12.5px;color:var(--muted)}
+  .docs{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+  .doc{font-size:12px;color:var(--ink-soft);background:var(--paper);border:1px solid var(--line);border-radius:7px;padding:4px 9px}
+  .doc b{font-family:"Spline Sans Mono",monospace;color:var(--muted);font-weight:400}
+  .empty{font-size:12.5px;color:var(--muted)}
+
+  .ask{margin-top:18px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .chip{font-size:12.5px;color:var(--ink-soft);background:var(--panel);border:1px solid var(--line-strong);border-radius:999px;padding:7px 13px;cursor:pointer;font-family:inherit}
+  .chip:hover{border-color:var(--teal);color:var(--teal)}
+  .inputrow{display:flex;gap:9px}
+  .field{flex:1;display:flex;align-items:center;background:var(--panel);border:1.5px solid var(--line-strong);border-radius:12px;padding:0 14px;transition:.15s}
+  .field:focus-within{border-color:var(--teal);box-shadow:0 0 0 4px var(--teal-soft)}
+  .field input{border:0;outline:0;background:transparent;font-family:inherit;font-size:15px;color:var(--ink);width:100%;padding:13px 0}
+  .askbtn{border:0;border-radius:12px;background:var(--teal);color:#f2fffd;font-family:inherit;font-size:14px;font-weight:600;padding:0 20px;cursor:pointer;white-space:nowrap}
+  .askbtn:hover{background:#0c5f58}.askbtn:disabled{opacity:.55;cursor:default}
+
+  .out{margin-top:22px}
+  .sectlabel{font-family:"Spline Sans Mono",monospace;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 11px}
+  .retr{display:grid;gap:9px;margin-bottom:20px}
+  .rchunk{border:1px solid var(--line);background:var(--panel);border-radius:11px;padding:11px 13px}
+  .rhead{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+  .tag{font-family:"Spline Sans Mono",monospace;font-size:11px;color:var(--teal);background:var(--teal-soft);border:1px solid var(--teal-line);border-radius:6px;padding:2px 7px;white-space:nowrap}
+  .bar{flex:1;height:5px;border-radius:99px;background:#ede9e0;overflow:hidden;min-width:50px}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,#3fb3a6,var(--teal))}
+  .score{font-family:"Spline Sans Mono",monospace;font-size:11px;color:var(--muted);min-width:34px;text-align:right}
+  .rtext{font-size:13px;color:var(--ink-soft)}
+  .answer{border:1.5px solid var(--teal-line);background:#fbfdfc;border-radius:var(--radius);padding:18px 19px 16px}
+  .answer.notfound{border-color:var(--amber-line);background:var(--amber-soft)}
+  .astate{display:inline-flex;align-items:center;gap:7px;font-family:"Spline Sans Mono",monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--teal);margin-bottom:11px}
+  .answer.notfound .astate{color:var(--amber)}
+  .dot{width:7px;height:7px;border-radius:99px;background:var(--teal)}.answer.notfound .dot{background:var(--amber)}
+  .atext{font-family:"Newsreader",Georgia,serif;font-size:17px;line-height:1.55}
+  .cites{margin-top:14px;padding-top:13px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  .cl{font-family:"Spline Sans Mono",monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-right:3px}
+  .cite{font-family:"Spline Sans Mono",monospace;font-size:11.5px;color:var(--teal);background:var(--teal-soft);border:1px solid var(--teal-line);border-radius:6px;padding:3px 8px}
+  .loading{display:flex;align-items:center;gap:11px;color:var(--muted);font-size:13.5px;padding:6px 2px}
+  .spin{width:15px;height:15px;border:2px solid var(--line-strong);border-top-color:var(--teal);border-radius:50%;animation:rot .7s linear infinite}
+  .err{border:1px solid var(--amber-line);background:var(--amber-soft);color:var(--amber);border-radius:11px;padding:12px 14px;font-size:13.5px}
+  @keyframes rot{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand">
+      <div class="mark">R</div>
+      <div><h1>Ops RAG Assistant</h1><div class="sub">Answers from your documents — grounded and cited.</div></div>
+    </div>
+    <div class="status" id="status">checking…</div>
+  </div>
+
+  <div class="panel">
+    <h2>Knowledge base</h2>
+    <div class="uprow">
+      <label class="filebtn">+ Choose files<input id="files" type="file" multiple accept=".md,.txt,.pdf"></label>
+      <span class="fname" id="fname">md, txt, or pdf</span>
+      <button class="btn" id="uploadbtn">Add to knowledge base</button>
+      <button class="btn ghost" id="samplebtn">Load sample handbook</button>
+    </div>
+    <div class="docs" id="docs"><span class="empty">No documents yet — upload your own or load the sample handbook.</span></div>
+  </div>
+
+  <div class="ask">
+    <div class="chips" id="chips"></div>
+    <div class="inputrow">
+      <label class="field"><input id="q" type="text" placeholder="Ask a question about your documents…" autocomplete="off"></label>
+      <button class="askbtn" id="askbtn">Ask</button>
+    </div>
+  </div>
+
+  <div class="out" id="out" aria-live="polite"></div>
+</div>
+
+<script>
+const SAMPLES=["How many PTO days do I get?","What's the daily meal limit when I travel?","Can I work from another country?","Do we get a free gym membership?"];
+let pw=null; // set if server requires a password (prompted on 401)
+
+function headers(json){const h=json?{"Content-Type":"application/json"}:{};if(pw)h["X-App-Password"]=pw;return h;}
+async function api(path,opts={}){
+  const res=await fetch(path,opts);
+  if(res.status===401){pw=prompt("This instance is password-protected. Enter access password:");if(pw)return api(path,opts);}
+  return res;
+}
+
+async function refreshStatus(){
+  try{const h=await(await fetch("/api/health")).json();
+    const s=document.getElementById("status");
+    if(h.answers_enabled){s.className="status ok";s.textContent="answers enabled";}
+    else{s.className="status warn";s.textContent="set API key on server";}
+  }catch(e){}
+}
+async function refreshDocs(){
+  const res=await api("/api/docs",{headers:headers(false)});
+  if(!res.ok)return;const {docs}=await res.json();
+  const el=document.getElementById("docs");
+  if(!docs.length){el.innerHTML='<span class="empty">No documents yet — upload your own or load the sample handbook.</span>';return;}
+  el.innerHTML=docs.map(d=>`<span class="doc">${esc(d.name)} <b>${d.chunks}</b></span>`).join("");
+}
+
+document.getElementById("files").addEventListener("change",e=>{
+  const n=e.target.files.length;document.getElementById("fname").textContent=n?`${n} file(s) selected`:"md, txt, or pdf";
+});
+document.getElementById("uploadbtn").addEventListener("click",async()=>{
+  const inp=document.getElementById("files");if(!inp.files.length){alert("Choose files first.");return;}
+  const btn=document.getElementById("uploadbtn");btn.disabled=true;btn.textContent="Indexing…";
+  const fd=new FormData();[...inp.files].forEach(f=>fd.append("files",f));
+  try{const h=pw?{"X-App-Password":pw}:{};await api("/api/upload",{method:"POST",headers:h,body:fd});await refreshDocs();}
+  catch(e){alert("Upload failed.");}
+  btn.disabled=false;btn.textContent="Add to knowledge base";inp.value="";document.getElementById("fname").textContent="md, txt, or pdf";
+});
+document.getElementById("samplebtn").addEventListener("click",async()=>{
+  const btn=document.getElementById("samplebtn");btn.disabled=true;btn.textContent="Loading…";
+  try{await api("/api/load-samples",{method:"POST",headers:headers(false)});await refreshDocs();}
+  catch(e){alert("Could not load samples.");}
+  btn.disabled=false;btn.textContent="Load sample handbook";
+});
+
+const out=document.getElementById("out"),qEl=document.getElementById("q"),askBtn=document.getElementById("askbtn");
+document.getElementById("chips").innerHTML=SAMPLES.map(s=>`<button class="chip" type="button">${s}</button>`).join("");
+document.querySelectorAll(".chip").forEach(c=>c.addEventListener("click",()=>{qEl.value=c.textContent;ask();}));
+askBtn.addEventListener("click",ask);
+qEl.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();ask();}});
+
+let busy=false;
+async function ask(){
+  const question=qEl.value.trim();if(!question||busy)return;busy=true;askBtn.disabled=true;
+  out.innerHTML=`<div class="loading"><span class="spin"></span> Retrieving and reading passages…</div>`;
+  try{
+    const res=await api("/api/ask",{method:"POST",headers:headers(true),body:JSON.stringify({question})});
+    const data=await res.json();render(data);
+  }catch(e){out.innerHTML=`<div class="err">Couldn't reach the server. Is it running?</div>`;}
+  busy=false;askBtn.disabled=false;
+}
+
+function render(d){
+  const sources=d.sources||[];let html="";
+  if(sources.length){
+    html+=`<div class="sectlabel">Retrieved from your documents</div><div class="retr">`+
+      sources.map(s=>{const rel=Math.max(0,Math.min(1,s.score));return `
+      <div class="rchunk"><div class="rhead">
+        <span class="tag">${esc(s.label)}</span>
+        <span class="bar"><i style="width:${Math.round(rel*100)}%"></i></span>
+        <span class="score">${s.score.toFixed(2)}</span>
+      </div><div class="rtext">${esc(s.text)}</div></div>`;}).join("")+`</div>`;
+  }
+  if(d.grounded===null){
+    html+=`<div class="err">${esc(d.answer)}</div>`;out.innerHTML=html;return;
+  }
+  const grounded=d.grounded!==false,cites=(d.citations||[]).filter(Boolean);
+  html+=`<div class="sectlabel" style="margin-top:4px">Answer</div>
+    <div class="answer ${grounded?"":"notfound"}">
+      <span class="astate"><span class="dot"></span>${grounded?"Grounded in your documents":"Not in your documents"}</span>
+      <div class="atext">${esc(d.answer||"")}</div>
+      ${grounded&&cites.length?`<div class="cites"><span class="cl">sources</span>${cites.map(c=>`<span class="cite">${esc(c)}</span>`).join("")}</div>`:""}
+    </div>`;
+  out.innerHTML=html;
+}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));}
+
+refreshStatus();refreshDocs();
+</script>
+</body>
+</html>
